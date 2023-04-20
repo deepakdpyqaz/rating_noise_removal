@@ -34,6 +34,8 @@ def main():
 
     dataset_name = pathlib.Path(fname).stem
     df = pd.read_csv(fname)
+    if len(df)>200000:
+        df = df.sample(200000)
     print(f"Dataset: {dataset_name} with rating scale (1, {max_rating})")
     print(f"Shape of the data: {df.shape}")
     reader = Reader(rating_scale=(1, max_rating))

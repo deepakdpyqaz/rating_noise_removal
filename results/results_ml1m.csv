@@ -1,0 +1,5 @@
+algo,rmse,mae
+base,0.941755759683494,0.7402609970691292
+<surprise.prediction_algorithms.slope_one.SlopeOne object at 0x7f863a516f20>,0.5562743588989572,0.3507517592892883
+<surprise.prediction_algorithms.knns.KNNBasic object at 0x7f864a042860>,0.7122079223006329,0.5273621349726827
+<surprise.prediction_algorithms.knns.KNNBasic object at 0x7f863a516f80>,0.7828838047705505,0.5891626762655804
