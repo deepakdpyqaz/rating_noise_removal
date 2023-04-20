@@ -1,0 +1,6 @@
+{
+    "movielens_100k":"https://files.grouplens.org/datasets/movielens/ml-100k/u.data",
+    "movielens_1m":"https://files.grouplens.org/datasets/movielens/ml-1m.zip",
+    "movitweet":"https://raw.githubusercontent.com/sidooms/MovieTweetings/master/latest/ratings.dat"
+
+}
