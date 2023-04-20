@@ -34,8 +34,8 @@ def main():
 
     dataset_name = pathlib.Path(fname).stem
     df = pd.read_csv(fname)
-    if len(df)>200000:
-        df = df.sample(200000)
+    if len(df)>100000:
+        df = df.sample(100000)
     print(f"Dataset: {dataset_name} with rating scale (1, {max_rating})")
     print(f"Shape of the data: {df.shape}")
     reader = Reader(rating_scale=(1, max_rating))
@@ -161,10 +161,12 @@ def main():
         KNNBasic(k=60, sim_options={"name": "pearson", "user_based": True}),
         KNNBasic(k=60, sim_options={"name": "pearson", "user_based": False}),
     ]
-
-    args = [(algo, trainset, testset) for algo in algorithms]
-    with Pool(3) as p:
-        results = p.starmap(get_accuracy, args)
+    results = []
+    for algo in algorithms:
+        results.append(get_accuracy(algo, trainset, testset))
+    # args = [(algo, trainset, testset) for algo in algorithms]
+    # with Pool(3) as p:
+    #     results = p.starmap(get_accuracy, args)
     results_dict = {"algo": ["base"], "rmse": [rmse_base], "mae": [mae_base]}
 
     for algo, rmse, mae in results:
