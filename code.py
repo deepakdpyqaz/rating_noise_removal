@@ -21,6 +21,22 @@ def get_accuracy(algo, trainset, testset):
     print(f"For {algo} RMSE is {rmse_error} and MAE is {mae_error}")
     return algo, rmse_error, mae_error
 
+def run_algos(n_jobs,trainset,testset):
+    algorithms = [
+        SlopeOne(),
+        KNNBasic(k=60, sim_options={"name": "pearson", "user_based": True}),
+        KNNBasic(k=60, sim_options={"name": "pearson", "user_based": False}),
+    ]
+
+    if n_jobs == 1:
+        results = []
+        for algo in algorithms:
+            results.append(get_accuracy(algo, trainset, testset))
+    else:
+        args = [(algo, trainset, testset) for algo in algorithms]
+        with Pool(n_jobs) as p:
+            results = p.starmap(get_accuracy, args)
+    return results
 
 def main():
     if len(sys.argv) < 2:
@@ -46,11 +62,15 @@ def main():
     print("Training set size: ", trainset.n_ratings)
     print("Test set size: ", len(df) - trainset.n_ratings)
 
-    print("Base algorithm (SlopeOne):")
-    algo_base, rmse_base, mae_base = get_accuracy(SlopeOne(), trainset, testset)
-
-    print("Base RMSE: ", rmse_base)
-    print("Base MAE: ", mae_base)
+    print("Base algorithms")
+    results_base = run_algos(n_jobs,trainset,testset)
+    algo_base = results_base[0][0]
+    results_dict = {"algo": [], "rmse": [], "mae": [],"type":[]}
+    for algo, rmse, mae in results_base:
+        results_dict["algo"].append(repr(algo).split(".")[-1].split(" ")[0])
+        results_dict["rmse"].append(rmse)
+        results_dict["mae"].append(mae)
+        results_dict["type"].append("base")
 
     print("Correcting Noise using fuzzy")
 
@@ -109,7 +129,7 @@ def main():
     new_ratings = []
 
 
-    df["rating_cat"] = df["rating"].apply(assign_class,axis=1)
+    df["rating_cat"] = df.apply(assign_class,axis=1)
 
     def get_new_rating(row):
         user = row["user"]
@@ -146,26 +166,12 @@ def main():
     print("Training set size: ", trainset.n_ratings)
     print("Test set size: ", len(df) - trainset.n_ratings)
 
-    algorithms = [
-        SlopeOne(),
-        KNNBasic(k=60, sim_options={"name": "pearson", "user_based": True}),
-        KNNBasic(k=60, sim_options={"name": "pearson", "user_based": False}),
-    ]
-
-    if n_jobs == 1:
-        results = []
-        for algo in algorithms:
-            results.append(get_accuracy(algo, trainset, testset))
-    else:
-        args = [(algo, trainset, testset) for algo in algorithms]
-        with Pool(3) as p:
-            results = p.starmap(get_accuracy, args)
-    results_dict = {"algo": ["base"], "rmse": [rmse_base], "mae": [mae_base]}
-
+    results = run_algos(n_jobs,trainset,testset)
     for algo, rmse, mae in results:
         results_dict["algo"].append(repr(algo).split(".")[-1].split(" ")[0])
         results_dict["rmse"].append(rmse)
         results_dict["mae"].append(mae)
+        results_dict["type"].append("fuzzy")
     df_results = pd.DataFrame(results_dict)
     df_results.to_csv(f"results/results_{dataset_name}.csv", index=False)
     print("Results saved as results.csv")
