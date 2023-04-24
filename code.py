@@ -31,6 +31,10 @@ def main():
         max_rating = int(sys.argv[2])
     else:
         max_rating = 5
+    if len(sys.argv)==4:
+        n_jobs = int(sys.argv[3])
+    else:
+        n_jobs = 1
 
     dataset_name = pathlib.Path(fname).stem
     df = pd.read_csv(fname)
@@ -104,20 +108,8 @@ def main():
 
     new_ratings = []
 
-    def get_rating_class(x):
-        l = fuzz.interp_membership(rating, rating_low, x)
-        m = fuzz.interp_membership(rating, rating_mid, x)
-        h = fuzz.interp_membership(rating, rating_high, x)
-        if l > m and l > h:
-            return "low"
-        elif m > l and m > h:
-            return "med"
-        elif h > l and h > m:
-            return "high"
-        else:
-            return "var"
 
-    df["rating_cat"] = df["rating"].apply(get_rating_class)
+    df["rating_cat"] = df["rating"].apply(assign_class,axis=1)
 
     def get_new_rating(row):
         user = row["user"]
@@ -159,12 +151,15 @@ def main():
         KNNBasic(k=60, sim_options={"name": "pearson", "user_based": True}),
         KNNBasic(k=60, sim_options={"name": "pearson", "user_based": False}),
     ]
-#     results = []
-#     for algo in algorithms:
-#         results.append(get_accuracy(algo, trainset, testset))
-    args = [(algo, trainset, testset) for algo in algorithms]
-    with Pool(3) as p:
-        results = p.starmap(get_accuracy, args)
+
+    if n_jobs == 1:
+        results = []
+        for algo in algorithms:
+            results.append(get_accuracy(algo, trainset, testset))
+    else:
+        args = [(algo, trainset, testset) for algo in algorithms]
+        with Pool(3) as p:
+            results = p.starmap(get_accuracy, args)
     results_dict = {"algo": ["base"], "rmse": [rmse_base], "mae": [mae_base]}
 
     for algo, rmse, mae in results:
